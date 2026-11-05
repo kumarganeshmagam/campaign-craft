@@ -1,0 +1,70 @@
+I need to transform this campaign craft site into an AI agent-orchestrated system with these capabilities:
+
+AGENT 1: Research & Discovery Agent
+- Input: Query like "top 5 financial institutes with $1B+ revenue in past 2 years"
+- Actions:
+  * Search Google/web for matching companies
+  * Scrape company websites, financial reports, news
+  * Extract: revenue data, business model, recent initiatives, pain points
+  * Output: Structured company profiles with decision justification
+
+AGENT 2: Stakeholder Intelligence Agent
+- Input: Company profiles from Agent 1
+- Actions:
+  * Find decision-makers (C-suite, VPs, department heads)
+  * Scrape LinkedIn, company pages, press releases
+  * Identify: contact info, role, responsibilities, recent posts/interests
+  * Output: Prioritized contact list with engagement signals
+
+AGENT 3: Use Case Generation Agent
+- Input: Company profile + our service catalog
+- Actions:
+  * Analyze company's tech stack, challenges, industry trends
+  * Match our services to their needs
+  * Generate 3-5 relevant use cases with:
+    - Problem statement
+    - Proposed solution
+    - Expected value/ROI
+    - Implementation approach
+  * Rank by relevance score
+  * Output: Contextual use cases per company
+
+AGENT 4: Proposal Generation Agent
+- Input: Use case + company context + contact profile
+- Actions:
+  * Generate multiple proposal variations (formal, concise, technical)
+  * Personalize based on contact's role and interests
+  * Include: executive summary, solution details, pricing tiers, timeline
+  * Output: 2-3 proposal variants per use case
+
+AGENT 5: Outreach Content Agent
+- Input: Contact profile + selected proposal
+- Actions:
+  * Generate personalized email sequences (initial + follow-ups)
+  * Create LinkedIn messages
+  * Draft call scripts
+  * Adapt tone based on seniority and industry
+  * Output: Multi-channel outreach content
+
+AGENT 6: Campaign Management Agent
+- Orchestrates all agents
+- Maintains state across the pipeline
+- Handles: campaign creation, contact list management, proposal versioning
+- Provides: progress tracking, success metrics, next-action recommendations
+
+TECHNICAL REQUIREMENTS:
+- Each agent should have memory/context storage
+- Agents communicate via structured message queue
+- Support human-in-the-loop at key decision points
+- Per-campaign/use-case/proposal dedicated chat interface
+- Version control for all generated content
+- Feedback loop: learn from pitch success/failure
+
+IMPLEMENTATION:
+- Use LangGraph or similar for agent orchestration
+- Implement tool-calling for web scraping (Firecrawl, Apify)
+- Use vector DB for company/contact knowledge storage
+- Build approval workflows for human oversight
+- Create dashboard showing agent activity and reasoning trails
+Level-Up Strategy
+1. Make Agents Autonomous with Tools

@@ -1,0 +1,232 @@
+You are an expert full-stack developer specializing in AI agent orchestration, web scraping, and React/Next.js apps with a FastAPI or Node.js backend.
+
+Create a complete web application named **CampaignCraft**.
+
+🎯 GOAL:
+A single-page web app that helps a user input a topic to start a **sales or marketing campaign**.  
+The system scrapes the web, generates campaign plans, use cases, proposals, and contact content automatically using AI agents.
+
+---
+
+### FRONTEND (React + Tailwind + Vite or Next.js)
+1. Landing screen:
+   - Centered search bar with placeholder “Enter a topic to start your campaign…”
+   - On submit, transform into a **chat-like interface** with tabs at the top:
+     - 🧠 `Plan`
+     - 💡 `Use Cases`
+     - 🎯 `Target Contact List`
+     - 📄 `Proposals`
+
+2. Tabs behavior:
+   - **Plan Tab:** Displays campaign plan generated from web scraping.
+   - **Use Cases Tab:** Lists use cases; clicking one opens a chat UI to refine or generate pitch content.
+   - **Target Contact List:** Shows table of public contacts (name, company, role, source link, and buttons for “Start Contact” or “Generate Message”).
+   - **Proposals Tab:** Displays AI-generated proposals; editable via inline chat or side AI editor.
+
+3. Global buttons:
+   - “Generate Campaign Content” → Triggers emails, DMs, and social posts via backend agent.
+   - “Start New Campaign” → Resets state.
+
+---
+
+### BACKEND (FastAPI preferred or Express.js)
+Create multiple AI-like agent endpoints (you can later connect to OpenAI or Ollama):
+
+#### 1️⃣ WebScraperAgent
+- Input: topic text
+- Task: Scrape web (Google/Bing/News) for top content and summarize insights.
+- Output: structured JSON with keywords, insights, and competitor list.
+
+#### 2️⃣ CampaignPlannerAgent
+- Input: streaming data from WebScraperAgent
+- Task: Create detailed campaign plan with timeline, strategy, and content suggestions.
+
+#### 3️⃣ StrategyFormatterAgent
+- Input: campaign data
+- Task: Format into human-readable plan: what to do, when, and who to contact.
+
+#### 4️⃣ UseCaseAgent
+- Input: topic and company type
+- Task: Generate use cases relevant to the campaign and their value propositions.
+
+#### 5️⃣ PitchAgent
+- Input: selected use case
+- Task: Generate multiple pitch variants (short, persuasive, technical).
+
+#### 6️⃣ ContentAgent
+- Input: pitch data + target type
+- Task: Generate DMs, emails, posts, and SMS copy.
+
+#### 7️⃣ TargetFinderAgent
+- Input: topic or industry
+- Task: Find public company and manager contacts (LinkedIn, Crunchbase, GitHub, etc. — simulated initially).
+- Output: JSON array of contacts with `name`, `role`, `company`, `contact_link`.
+
+---
+
+### AI ORCHESTRATION LOGIC
+- The frontend communicates with `/api/start-campaign`.
+- Backend:
+  1. Calls WebScraperAgent → feeds data into CampaignPlannerAgent.
+  2. Planner → feeds into StrategyFormatterAgent.
+  3. Parallel agents (UseCaseAgent, TargetFinderAgent) run asynchronously.
+  4. All responses are streamed back to frontend via WebSocket or Server-Sent Events (SSE).
+
+---
+
+### DATABASE (optional)
+Use SQLite or MongoDB:
+- Store campaigns, use cases, proposals, contacts, and generated content.
+
+---
+
+### EXTRAS
+- Add a `/chat` endpoint to update plan or use case interactively.
+- Add simple user auth (optional).
+- Include modular folder structure:
+
+
+---
+
+### STYLE AND UX
+- Use Tailwind CSS.
+- Smooth transitions between tabs (Framer Motion).
+- Minimalistic aesthetic (white background, blue accent).
+- Responsive for mobile.
+
+GOAL:
+A single-page web app that lets users input a topic to start an AI-driven sales or marketing campaign.
+The system scrapes the web, generates campaign plans, use cases, proposals, and outreach content automatically.
+
+---
+
+### FRONTEND (React + Tailwind + Vite or Next.js)
+[ ... same as before ... ]  ← keep the tabbed UI, chat interface, and features described above
+
+---
+
+### BACKEND (FastAPI preferred or Node.js)
+Implement modular AI agents:
+1️⃣ WebScraperAgent  
+2️⃣ CampaignPlannerAgent  
+3️⃣ StrategyFormatterAgent  
+4️⃣ UseCaseAgent  
+5️⃣ PitchAgent  
+6️⃣ ContentAgent  
+7️⃣ TargetFinderAgent  
+
+Each agent should be a self-contained module that exposes a function:
+```python
+async def run_agent(input_data: dict) -> dict:
+    ...
+
+🧩 MULTI-AI ORCHESTRATION LAYER (IMPORTANT)
+
+Integrate Google Gemini, OpenAI GPT, Anthropic Claude, and other future AI providers.
+
+Create these components:
+1. AIProviderController
+
+    Central entry point for all agent requests.
+
+    Reads provider from .env file or environment variable AI_PROVIDER.
+
+    Based on provider, routes requests to the appropriate orchestrator (Gemini, GPT, Claude, etc.).
+
+    Must be designed to easily add new providers later.
+
+Example .env:
+
+AI_PROVIDER=gemini
+GEMINI_API_KEY=...
+OPENAI_API_KEY=...
+ANTHROPIC_API_KEY=...
+
+2. GeminiOrchestrator
+
+    Implements call to Google Gemini API (model selection, temperature, system prompts, etc.).
+
+    Handles streaming responses for live updates.
+
+    Should include helper methods like generate_text(), summarize(), analyze_web_data(), etc.
+
+3. OpenAIOrchestrator
+
+    Wraps OpenAI API calls similarly.
+
+4. ClaudeOrchestrator
+
+    Wraps Anthropic Claude calls similarly.
+
+5. AgentRouter (Central Controller)
+
+    All agents import this.
+
+    Accepts inputs like { agent_name, task_type, payload }.
+
+    Uses AIProviderController to decide which provider to invoke.
+
+    Scalable to handle future providers (e.g., Mistral, Llama).
+
+FLOW
+
+    User inputs topic → frontend sends /api/start-campaign.
+
+    Backend:
+
+        Calls WebScraperAgent → feeds into CampaignPlannerAgent.
+
+        Planner → feeds into StrategyFormatterAgent.
+
+        Runs UseCaseAgent, TargetFinderAgent concurrently.
+
+        Routes all LLM calls through AgentRouter → AIProviderController → <ProviderOrchestrator>.
+
+        Streams combined response to frontend via WebSocket or SSE.
+
+REQUIREMENTS
+
+    Use async functions and dependency injection (FastAPI) or modular services (Node).
+
+    Environment-based provider selection.
+
+    Clean architecture for agent orchestration.
+
+    Provide README.md with instructions on switching providers via .env.
+
+    Mock responses first if no real API keys exist.
+
+AFTER CORE APP IS READY
+
+Add:
+
+    /chat endpoint for live updates.
+
+    Data models for Campaign, UseCase, Proposal, TargetContact.
+
+    Example campaign “AI automation in retail.”
+
+    Tailwind + Framer Motion for smooth tab transitions.
+
+FINAL NOTE
+
+At the end, implement:
+✅ AIProviderController
+✅ GeminiOrchestrator
+✅ GPTOrchestrator
+✅ ClaudeOrchestrator
+✅ AgentRouter
+
+Make it modular, scalable, and ready for future providers.
+
+Use .env for provider selection and API keys.
+Document how to extend it with new AI providers.
+OUTPUT
+
+    Complete backend folder with agents, orchestrators, and controllers.
+
+    React frontend with chat UI and tabs.
+
+    Example campaign workflow.
+
+    README with setup instructions and environment variables.

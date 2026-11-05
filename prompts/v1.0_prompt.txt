@@ -1,0 +1,294 @@
+TRANSFORM THIS CAMPAIGN CRAFT APP INTO A FULLY AUTONOMOUS AI AGENT SYSTEM
+
+# ARCHITECTURE OVERVIEW
+Build a complete agentic workflow system where AI agents autonomously research companies, find contacts, generate use cases, create proposals, and draft outreach content.
+
+# CORE REQUIREMENTS
+
+## 1. AGENT ORCHESTRATION (LangGraph)
+- Install: langgraph, langchain, langchain-openai, langchain-community
+- Create StateGraph with 6 specialized agents
+- Shared state schema:
+  {
+    campaign_id, 
+    query, 
+    companies: [{name, revenue, pain_points, tech_stack, urls}],
+    contacts: [{name, role, email, linkedin, company_id, engagement_signals}],
+    use_cases: [{company_id, title, problem, solution, value, confidence_score}],
+    proposals: [{use_case_id, variants: [], personalization}],
+    outreach: [{contact_id, channel, content, sequence_step}]
+  }
+
+## 2. AGENT IMPLEMENTATIONS
+
+### Research Agent
+TOOLS: Brave Search API, Firecrawl/Playwright, BeautifulSoup
+INPUT: User query (e.g., "top 5 financial institutes $1B+ revenue")
+LOGIC:
+- Parse query → identify criteria (industry, revenue, timeframe)
+- Search Google for matching companies
+- For each result: scrape company website, LinkedIn, Crunchbase
+- Extract: company name, revenue data, recent news, technology mentions, pain points
+- Validate against criteria, rank by relevance
+- Store in state.companies[]
+OUTPUT: Structured company profiles with confidence scores
+
+### Stakeholder Intelligence Agent  
+TOOLS: Proxycurl API / LinkedIn scraper, Apollo.io API, Hunter.io
+INPUT: state.companies[]
+LOGIC:
+- For each company: search LinkedIn for C-suite, VPs, Directors
+- Filter by decision-making roles relevant to our services
+- Scrape: name, title, email, recent posts, interests, tenure
+- Score contacts by: seniority, engagement likelihood, access to budget
+- Store in state.contacts[]
+OUTPUT: Prioritized contact list per company
+
+### Use Case Generation Agent
+TOOLS: OpenAI GPT-4, web search for industry trends
+INPUT: state.companies[i] + our_services_catalog
+LOGIC:
+- Analyze company's industry, size, tech stack, pain points
+- Research current trends in their sector
+- Match our services to their challenges
+- Generate 3-5 specific use cases with:
+  * Problem statement (their pain point)
+  * Solution (our service application)
+  * Expected ROI / value metrics
+  * Implementation timeline
+- Rank by: relevance, value potential, competitive advantage
+- Store in state.use_cases[]
+OUTPUT: Contextualized use cases per company
+
+### Proposal Generation Agent
+TOOLS: OpenAI GPT-4 with structured outputs
+INPUT: state.use_cases[i] + state.companies[i] + state.contacts[i]
+LOGIC:
+- For each use case, generate 2-3 proposal variants:
+  * Executive Summary version (1 page, high-level)
+  * Technical Deep-Dive (detailed, for technical buyers)
+  * ROI-Focused (metrics-heavy, for financial decision-makers)
+- Personalize based on contact's role and seniority
+- Include: problem, solution, deliverables, timeline, pricing tiers, case studies
+- Store in state.proposals[]
+OUTPUT: Multiple proposal variants per use case
+
+### Outreach Content Agent
+TOOLS: OpenAI GPT-4
+INPUT: state.contacts[i] + state.proposals[i]
+LOGIC:
+- Analyze contact's profile, recent activity, communication style
+- Generate multi-channel outreach:
+  * Email sequence: initial + 2 follow-ups (spaced 3-5 days)
+  * LinkedIn connection message + inmails
+  * Call script with objection handling
+- Adapt tone: formal for C-suite, conversational for mid-level
+- Include personalization hooks from their recent posts/company news
+- Store in state.outreach[]
+OUTPUT: Ready-to-send outreach content
+
+### Campaign Manager Agent (Orchestrator)
+TOOLS: All agent tools + workflow control
+LOGIC:
+- Receives campaign request from user
+- Routes tasks to appropriate agents in sequence
+- Monitors progress, handles errors/retries
+- Asks user for approval at key checkpoints:
+  * After company research (approve company list)
+  * After use case generation (select use cases to pursue)
+  * Before outreach execution (review content)
+- Maintains campaign state, generates progress reports
+- Provides reasoning for all decisions
+
+## 3. DATABASE SCHEMA
+
+### Tables:
+campaigns (id, name, query, status, created_at)
+companies (id, campaign_id, name, revenue, data_json, confidence_score)
+contacts (id, company_id, name, role, email, linkedin, data_json, priority_score)
+use_cases (id, company_id, title, problem, solution, value, confidence_score)
+proposals (id, use_case_id, variant_type, content, version)
+outreach (id, contact_id, proposal_id, channel, content, status, sent_at)
+conversations (id, entity_type, entity_id, messages_json) -- for dedicated chats
+
+## 4. API INTEGRATIONS
+
+Required APIs (provide setup instructions):
+- Brave Search API or SerpAPI (web search)
+- Firecrawl or Apify (web scraping)
+- Proxycurl or ScraperAPI (LinkedIn data)
+- Hunter.io or Apollo.io (email finding)
+- OpenAI API (all agents)
+
+Implement retry logic, rate limiting, error handling for all API calls.
+
+## 5. FEATURES TO BUILD
+
+### Campaign Dashboard
+- Create new campaign with query input
+- View agent activity timeline (which agent doing what)
+- Show agent reasoning logs ("I chose Company X because...")
+- Display confidence scores for all outputs
+- Approve/reject gates at key stages
+
+### Company Workspace
+Per company page showing:
+- Company profile with data sources
+- Contact list with priority scores
+- Generated use cases with rankings
+- Related proposals
+- Outreach content drafts
+
+### Dedicated Chat System
+Implement chat interface for:
+- /campaign/{id}/chat - overall campaign strategy
+- /company/{id}/chat - specific company questions
+- /use-case/{id}/chat - refine use case
+- /proposal/{id}/chat - edit proposal
+
+Each chat:
+- Has context about the entity
+- Can invoke relevant agents to update content
+- Maintains conversation history
+- Shows what changed after user feedback
+
+### Agent Reasoning Visualization
+For every agent action, show:
+- Input received
+- Plan created (step-by-step)
+- Tools used and results
+- Decision rationale
+- Confidence score
+- Alternative options considered
+
+### Contact List Manager
+- View all contacts across campaign
+- Track: outreach status, responses, next actions
+- Filter by: company, role, engagement level
+- Bulk actions: send outreach, update status
+
+## 6. WORKFLOW IMPLEMENTATION
+
+Campaign Execution Flow:
+1. User creates campaign with query
+2. Campaign Manager Agent activates Research Agent
+3. Research Agent → finds companies → asks user approval
+4. Approved companies → Stakeholder Agent → finds contacts
+5. Contacts + Companies → Use Case Agent → generates use cases → user selects best
+6. Selected use cases → Proposal Agent → creates variants
+7. Proposals + Contacts → Outreach Agent → drafts content → user reviews
+8. User sends outreach → track responses in Contact Manager
+
+Use conditional routing:
+- If confidence_score < 0.7, ask user for input
+- If no contacts found, retry with different search
+- If use case generation fails, research more company data
+
+## 7. TECHNICAL STACK
+
+Backend:
+- FastAPI or Django
+- Celery for async agent tasks
+- PostgreSQL for structured data
+- Redis for caching and task queue
+- Pinecone or Qdrant for vector storage (company/contact embeddings)
+
+Frontend:
+- React or Next.js
+- Real-time updates (WebSocket or SSE) for agent activity
+- TailwindCSS for UI
+- React Query for data fetching
+
+Deployment:
+- Docker containers for each service
+- Environment variables for all API keys
+- Rate limiting and error boundaries
+
+## 8. AUTONOMOUS AGENT LOGIC
+
+Each agent must:
+```python
+class AutonomousAgent:
+    def execute(self, task, context):
+        # 1. UNDERSTAND
+        parsed_task = self.understand_task(task, context)
+        
+        # 2. PLAN
+        plan = self.create_plan(parsed_task)
+        # Returns: [{step, tool, expected_output, fallback}, ...]
+        
+        # 3. EXECUTE WITH SELF-CORRECTION
+        results = []
+        for step in plan:
+            result = self.use_tool(step.tool, step.params)
+            quality = self.evaluate_result(result, step.expected_output)
+            
+            if quality < 0.6:
+                result = self.retry_with_different_approach(step)
+            
+            results.append(result)
+        
+        # 4. SYNTHESIZE
+        final_output = self.synthesize(results)
+        
+        # 5. REFLECT
+        confidence = self.calculate_confidence(final_output)
+        reasoning = self.explain_reasoning(plan, results, final_output)
+        
+        return {
+            'output': final_output,
+            'confidence': confidence,
+            'reasoning': reasoning,
+            'sources': self.get_sources()
+        }
+```
+
+## 9. HUMAN-IN-THE-LOOP GATES
+
+Add approval checkpoints:
+- After Research Agent: "Found 7 companies. Approve to proceed?"
+- After Use Case Agent: "Generated 12 use cases. Select which to pursue?"
+- Before Outreach Agent: "Review outreach content before sending?"
+
+Show at each gate:
+- Agent's recommendation with reasoning
+- Confidence scores
+- Alternative options
+- "Proceed" / "Modify" / "Reject" buttons
+
+## 10. LEARNING & IMPROVEMENT
+
+Implement feedback loop:
+- Track: which companies responded, which proposals converted, which outreach worked
+- Store success metrics per: industry, use case type, contact role, outreach style
+- Agents query this data to improve future decisions
+- Use case agent: rank based on historical conversion rates
+- Outreach agent: adapt tone based on what worked before
+
+## 11. DELIVERABLES
+
+Provide complete implementation:
+1. LangGraph agent definitions (all 6 agents)
+2. API integration code with error handling
+3. Database models and migrations
+4. Backend API endpoints for all features
+5. Frontend components for dashboard, workspaces, chat
+6. Agent reasoning visualization components
+7. Deployment configuration (Docker, env vars)
+8. README with setup instructions
+9. Example campaign walkthrough
+
+## 12. MAKE IT PRODUCTION-READY
+
+- Environment-based configuration (dev/prod)
+- Comprehensive error handling and logging
+- API rate limiting and retry logic
+- User authentication and authorization
+- Data validation at every step
+- Agent activity audit logs
+- Cost tracking for API usage
+- Performance monitoring
+
+GOAL: User enters a query, agents autonomously research, analyze, and generate everything needed for outreach campaigns with minimal human intervention. Every decision is explainable, every output is editable, and the system learns from outcomes.
+
+START IMPLEMENTATION NOW. Begin with the agent orchestration layer and Research Agent, then build out remaining agents. Provide working code, not pseudocode.
